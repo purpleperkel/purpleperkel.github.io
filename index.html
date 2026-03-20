@@ -1,12 +1,1098 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jamie Perkel – Portfolio</title>
-  </head>
-  <body>
-    <h1>Hello, I'm Jamie</h1>
-    <p>Portfolio coming soon.</p>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jamie Perkel</title>
+  <meta name="description" content="Salesforce Developer & API Integration Specialist — Jamie Perkel">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+    ============================================================ */
+    :root {
+      --bg:        #1c1b2e;
+      --surface:   #272440;
+      --surface-2: #2e2a4a;
+      --border:    #3a3560;
+      --text:      #f0ecff;
+      --muted:     #9a94be;
+      --dim:       #5a5480;
+      --accent:    #f0b8d0;
+      --blue:      #9db4f5;
+      --lavender:  #c4aff0;
+      --glow-a:    rgba(240, 184, 208, 0.08);
+
+      /* section glass mask — shared between all body panels */
+      --mask-v: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+      --mask-h: linear-gradient(to right,  transparent 0%, black  8%, black 92%, transparent 100%);
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       CANVAS BACKGROUND
+    ============================================================ */
+    #geo-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       NAV
+    ============================================================ */
+    nav {
+      position: fixed;
+      top: 0; width: 100%;
+      z-index: 100;
+      padding: 1.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(28, 27, 46, 0.88);
+      backdrop-filter: blur(16px);
+      border-color: var(--border);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .nav-logo .diamond {
+      width: 9px; height: 9px;
+      background: var(--accent);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      flex-shrink: 0;
+    }
+    nav ul { display: flex; gap: 2.5rem; list-style: none; }
+    nav a {
+      font-size: 0.63rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--accent); }
+
+    /* ============================================================
+       SHARED UTILITIES
+    ============================================================ */
+    section { position: relative; z-index: 1; }
+
+    .s-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .s-label::before { content: '■'; font-size: 0.38rem; }
+
+    .sec-hd {
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+      margin-bottom: 3.5rem;
+    }
+    .sec-hd h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 300;
+    }
+
+    /* scroll-reveal */
+    .rv {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .rv.vis {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.6rem 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 500;
+    }
+    .btn-primary:hover { background: var(--text); }
+    .btn-ghost {
+      border: 1px solid rgba(196, 175, 240, 0.35);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ============================================================
+       SECTION GLASS PANELS
+       backdrop-filter panels behind all body sections.
+       mask-composite clips the blur itself for soft edges.
+    ============================================================ */
+    #about,
+    #skills,
+    #projects,
+    #contact { position: relative; }
+
+    #about::before,
+    #skills::before,
+    #projects::before,
+    #contact::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1160px, 96vw);
+      top: 0; bottom: 0;
+      background: rgba(20, 19, 36, 0.48);
+      backdrop-filter: blur(5px) saturate(1.15);
+      -webkit-backdrop-filter: blur(5px) saturate(1.15);
+      mask-image: var(--mask-v), var(--mask-h);
+      mask-composite: intersect;
+      -webkit-mask-image: var(--mask-v), var(--mask-h);
+      -webkit-mask-composite: destination-in;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #contact::before { width: min(720px, 96vw); }
+
+    /* lift all direct children above the glass layer */
+    #about > *,
+    #skills > *,
+    #projects > *,
+    #contact > * { position: relative; z-index: 1; }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 7rem 3rem 4rem;
+      position: relative;
+    }
+
+    /* liquid glass disc */
+    .hero-glass {
+      position: relative;
+      width: min(560px, 88vw);
+      aspect-ratio: 1 / 1;
+      padding: 3.5rem 3rem 3rem;
+      border-radius: 50%;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 55%, transparent 100%),
+        radial-gradient(ellipse at 62% 72%, rgba(196,175,240,0.06) 0%, transparent 60%),
+        rgba(28, 27, 46, 0.38);
+      backdrop-filter: blur(5px) saturate(1.3);
+      -webkit-backdrop-filter: blur(5px) saturate(1.3);
+      border: 1px solid transparent;
+      background-clip: padding-box;
+      box-shadow:
+        inset 0  1px 0 rgba(255,255,255,0.14),
+        inset 0 -1px 0 rgba(255,255,255,0.04),
+        0 0 0 1px rgba(196,175,240,0.18),
+        0 8px 60px rgba(28,20,50,0.55),
+        0 0 80px rgba(196,175,240,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* inner vignette at glass edges */
+    .hero-glass::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(10,8,24,0.28) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* rotating geometric frame — fills glass disc perfectly */
+    #hero-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      animation: frameRotate 70s linear infinite;
+    }
+    @keyframes frameRotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* hero text content — sits above frame and vignette */
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-eye {
+      font-size: 0.58rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-eye::before,
+    .hero-eye::after {
+      content: '';
+      display: block;
+      width: 18px; height: 1px;
+      background: var(--accent);
+    }
+
+    .hero-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.2rem, 8.5vw, 7rem);
+      font-weight: 300;
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.35s forwards;
+    }
+    .hero-name em { font-style: italic; color: var(--accent); }
+
+    .hero-sub {
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 1.3rem;
+      margin-bottom: 1.1rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.55s forwards;
+    }
+
+    .hero-desc {
+      max-width: 340px;
+      font-size: 0.68rem;
+      line-height: 1.85;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.7s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.85s forwards;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      z-index: 2;
+      opacity: 0;
+      animation: fadeUp 0.8s 1.1s forwards;
+    }
+    .scroll-hint .line {
+      width: 1px; height: 36px;
+      background: linear-gradient(to bottom, var(--dim), transparent);
+      animation: pulseLine 1.6s ease-in-out infinite;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseLine {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 1; }
+    }
+
+    /* ============================================================
+       ABOUT
+    ============================================================ */
+    #about {
+      padding: 9rem 3rem;
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 6rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .about-h { padding-top: 0.3rem; }
+    .about-body h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+    }
+    .about-body p {
+      font-size: 0.76rem;
+      line-height: 1.9;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .stat-n {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.6rem;
+      font-weight: 300;
+      color: var(--accent);
+      line-height: 1;
+      display: block;
+    }
+    .stat-l {
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-top: 0.3rem;
+      display: block;
+    }
+
+    /* ============================================================
+       SKILLS
+    ============================================================ */
+    #skills {
+      padding: 6rem 3rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .sk-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.8rem;
+      position: relative;
+      overflow: hidden;
+    }
+    /* pixel corner accents */
+    .sk-box::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 5px; height: 5px;
+      background: var(--accent);
+      box-shadow: 5px 0 0 var(--accent), 0 5px 0 var(--accent);
+    }
+    .sk-box::after {
+      content: '';
+      position: absolute; bottom: 0; right: 0;
+      width: 5px; height: 5px;
+      background: var(--blue);
+      box-shadow: -5px 0 0 var(--blue), 0 -5px 0 var(--blue);
+    }
+    .sk-title {
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.3rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .tag {
+      font-size: 0.58rem;
+      letter-spacing: 0.07em;
+      padding: 0.28rem 0.65rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .tag:hover { border-color: var(--accent); color: var(--accent); background: var(--glow-a); }
+    .tag.hi    { border-color: var(--lavender); color: var(--lavender); background: rgba(196,175,240,0.08); }
+
+    /* ============================================================
+       PROJECTS
+    ============================================================ */
+    #projects {
+      padding: 6rem 3rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .pc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.25s;
+    }
+    .pc:hover { border-color: var(--lavender); transform: translateY(-3px); }
+
+    /* cursor-tracking radial glow on hover */
+    .pc::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(320px circle at var(--cx, 50%) var(--cy, 50%), rgba(196,175,240,0.09), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .pc:hover::before { opacity: 1; }
+
+    /* scanline overlay on hover */
+    .pc-scan {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 3px,
+        rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px
+      );
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .pc:hover .pc-scan { opacity: 1; }
+
+    .pc-num   { font-size: 0.58rem; letter-spacing: 0.15em; color: var(--dim); margin-bottom: 1.4rem; }
+    .pc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.65rem;
+      line-height: 1.2;
+    }
+    .pc-desc  { font-size: 0.68rem; line-height: 1.85; color: var(--muted); margin-bottom: 1.5rem; }
+    .tech-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .tt {
+      font-size: 0.54rem;
+      letter-spacing: 0.09em;
+      padding: 0.2rem 0.5rem;
+      background: var(--surface-2);
+      color: var(--blue);
+      border: 1px solid rgba(157,180,245,0.25);
+    }
+
+    /* ============================================================
+       CONTACT
+    ============================================================ */
+    #contact {
+      padding: 9rem 3rem;
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    #contact .s-label { justify-content: center; margin-bottom: 1.5rem; }
+    #contact h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 300;
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+    }
+    #contact h2 em { font-style: italic; color: var(--accent); }
+    #contact p { font-size: 0.73rem; line-height: 1.9; color: var(--muted); margin-bottom: 2.8rem; }
+    .c-links { display: flex; justify-content: center; gap: 0.9rem; flex-wrap: wrap; }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 1.8rem 3rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer p { font-size: 0.58rem; letter-spacing: 0.1em; color: var(--dim); }
+    .f-dots { display: flex; gap: 3px; align-items: center; }
+    .f-dot  { width: 4px; height: 4px; background: var(--border); }
+    .f-dot.on { background: var(--accent); }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.5rem; }
+      nav ul { gap: 1.5rem; }
+
+      #hero { padding: 5.5rem 1.5rem 4rem; }
+      .hero-glass { width: min(92vw, 460px); padding: 2.5rem 1.5rem; }
+
+      #about {
+        padding: 5rem 1.5rem;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      #skills, #projects, #contact { padding: 4rem 1.5rem; }
+      .skill-grid, .proj-grid { grid-template-columns: 1fr; }
+      .stats { gap: 2rem; flex-wrap: wrap; }
+
+      footer { padding: 1.5rem; flex-direction: column; gap: 0.8rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Star constellation canvas — fixed full-viewport background -->
+  <canvas id="geo-canvas"></canvas>
+
+  <!-- ============================================================
+       NAV
+  ============================================================ -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">
+      <div class="diamond"></div>
+      Jamie Perkel
+    </a>
+    <ul>
+      <li><a href="#about">About</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+  ============================================================ -->
+  <section id="hero">
+    <div class="hero-glass">
+
+      <!-- Geometric frame — rotates inside the glass disc -->
+      <svg id="hero-frame" viewBox="0 0 560 560" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="280,28 394,72 472,150 516,264 472,378 394,456 280,500 166,456 88,378 44,264 88,150 166,72"
+          stroke="#f0b8d0" stroke-width="0.8" stroke-dasharray="6 9" opacity="0.32"/>
+        <polygon points="280,78 424,226 280,374 136,226"
+          stroke="#9db4f5" stroke-width="0.7" stroke-dasharray="4 11" opacity="0.25"/>
+        <polygon points="280,118 392,302 168,302" stroke="#c4aff0" stroke-width="0.65" opacity="0.18"/>
+        <polygon points="280,402 168,218 392,218" stroke="#c4aff0" stroke-width="0.65" opacity="0.18"/>
+        <line x1="44"  y1="264" x2="28"  y2="264" stroke="#f0b8d0" stroke-width="1" opacity="0.38"/>
+        <line x1="516" y1="264" x2="532" y2="264" stroke="#f0b8d0" stroke-width="1" opacity="0.38"/>
+        <line x1="280" y1="28"  x2="280" y2="12"  stroke="#f0b8d0" stroke-width="1" opacity="0.38"/>
+        <line x1="280" y1="500" x2="280" y2="516" stroke="#f0b8d0" stroke-width="1" opacity="0.38"/>
+        <rect x="276" y="24"  width="8" height="8" fill="none" stroke="#f0b8d0" stroke-width="0.9" transform="rotate(45 280 28)"  opacity="0.55"/>
+        <rect x="276" y="496" width="8" height="8" fill="none" stroke="#f0b8d0" stroke-width="0.9" transform="rotate(45 280 500)" opacity="0.55"/>
+        <rect x="40"  y="260" width="8" height="8" fill="none" stroke="#9db4f5" stroke-width="0.9" transform="rotate(45 44 264)"  opacity="0.55"/>
+        <rect x="512" y="260" width="8" height="8" fill="none" stroke="#9db4f5" stroke-width="0.9" transform="rotate(45 516 264)" opacity="0.55"/>
+      </svg>
+
+      <div class="hero-inner">
+        <div class="hero-eye">Portfolio · 2026</div>
+        <h1 class="hero-name">Jamie<br><em>Perkel</em></h1>
+        <p class="hero-sub">Salesforce Developer &nbsp;·&nbsp; API Integration Specialist</p>
+        <p class="hero-desc">Building the connective tissue of modern revenue stacks — Salesforce Apex, LWC, and multi-agent AI systems that turn manual overhead into elegant automation.</p>
+        <div class="hero-cta">
+          <a href="#projects" class="btn btn-primary scroll-trigger">View Work</a>
+          <a href="#contact"  class="btn btn-ghost   scroll-trigger">Get in Touch</a>
+        </div>
+      </div>
+
+    </div>
+
+    <a href="#about" class="scroll-hint scroll-trigger" aria-label="Scroll down">
+      <div class="line"></div>
+      Scroll
+    </a>
+  </section>
+
+  <!-- ============================================================
+       ABOUT
+  ============================================================ -->
+  <section id="about">
+    <div class="about-h rv">
+      <div class="s-label">About</div>
+    </div>
+    <div class="about-body rv">
+      <h2>Developer with a systems-thinking mindset.</h2>
+      <p>I specialize in building and connecting the tools that power modern go-to-market teams — crafting Salesforce automations, LWC components, and API integrations that eliminate manual overhead and surface better data.</p>
+      <p>Outside of RevOps tooling I explore AI-augmented workflows, MCP server architecture, and hardware maker projects on Raspberry Pi and 3D printers. I like systems that are elegant and maintainable.</p>
+      <div class="stats">
+        <div><span class="stat-n">4+</span><span class="stat-l">Years Salesforce</span></div>
+        <div><span class="stat-n">20+</span><span class="stat-l">Integrations Built</span></div>
+        <div><span class="stat-n">∞</span><span class="stat-l">Tabs Open</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SKILLS
+  ============================================================ -->
+  <section id="skills">
+    <div class="sec-hd rv">
+      <div class="s-label">Skills</div>
+      <h2>Technical Stack</h2>
+    </div>
+    <div class="skill-grid rv">
+      <div class="sk-box">
+        <div class="sk-title">Salesforce Platform</div>
+        <div class="tags">
+          <span class="tag hi">Apex</span>
+          <span class="tag hi">LWC</span>
+          <span class="tag">SOQL / SOSL</span>
+          <span class="tag">Flow Builder</span>
+          <span class="tag">Triggers</span>
+          <span class="tag">Batch Jobs</span>
+          <span class="tag">Platform Events</span>
+          <span class="tag">Named Credentials</span>
+          <span class="tag">Duplicate Rules</span>
+          <span class="tag">Reports &amp; Dashboards</span>
+        </div>
+      </div>
+      <div class="sk-box">
+        <div class="sk-title">API &amp; Integration</div>
+        <div class="tags">
+          <span class="tag hi">REST APIs</span>
+          <span class="tag hi">Claude API</span>
+          <span class="tag">MCP Servers</span>
+          <span class="tag">Salesforce Connect</span>
+          <span class="tag">Calendly API</span>
+          <span class="tag">Confluence API</span>
+          <span class="tag">LinkedIn API</span>
+          <span class="tag">Flask</span>
+          <span class="tag">Python</span>
+          <span class="tag">OAuth 2.0</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROJECTS
+  ============================================================ -->
+  <section id="projects">
+    <div class="sec-hd rv">
+      <div class="s-label">Work</div>
+      <h2>Selected Projects</h2>
+    </div>
+    <div class="proj-grid">
+
+      <div class="pc rv">
+        <div class="pc-scan" aria-hidden="true"></div>
+        <div class="pc-num">01 ■</div>
+        <h3 class="pc-title">Multi-Agent AI Call Guide</h3>
+        <p class="pc-desc">A Salesforce LWC-embedded multi-agent system using Claude's API and Confluence as a knowledge base — routing queries through specialized subagents to surface real-time call guidance.</p>
+        <div class="tech-wrap">
+          <span class="tt">Salesforce LWC</span>
+          <span class="tt">Claude API</span>
+          <span class="tt">Confluence API</span>
+          <span class="tt">Apex</span>
+        </div>
+      </div>
+
+      <div class="pc rv">
+        <div class="pc-scan" aria-hidden="true"></div>
+        <div class="pc-num">02 ■</div>
+        <h3 class="pc-title">Duplicate Record Manager</h3>
+        <p class="pc-desc">A production-grade LWC for Salesforce duplicate management — Lead-to-Contact conversion, configurable auto-merge rules, merge history tracking, and FLS-compliant SOQL throughout.</p>
+        <div class="tech-wrap">
+          <span class="tt">Salesforce LWC</span>
+          <span class="tt">Apex</span>
+          <span class="tt">SOQL</span>
+          <span class="tt">Security Review</span>
+        </div>
+      </div>
+
+      <div class="pc rv">
+        <div class="pc-scan" aria-hidden="true"></div>
+        <div class="pc-num">03 ■</div>
+        <h3 class="pc-title">TimelapsePI</h3>
+        <p class="pc-desc">Flask-based timelapse camera app for Raspberry Pi with a glassmorphism UI, time-based variable intervals, pause/resume persistence, and timestamp overlays.</p>
+        <div class="tech-wrap">
+          <span class="tt">Python</span>
+          <span class="tt">Flask</span>
+          <span class="tt">Raspberry Pi</span>
+          <span class="tt">CSS / JS</span>
+        </div>
+      </div>
+
+      <div class="pc rv">
+        <div class="pc-scan" aria-hidden="true"></div>
+        <div class="pc-num">04 ■</div>
+        <h3 class="pc-title">OctoPrint MCP Server</h3>
+        <p class="pc-desc">An MCP server exposing full 3D printer control through Claude — conversational print job management, real-time status monitoring, and printer commands via natural language.</p>
+        <div class="tech-wrap">
+          <span class="tt">MCP</span>
+          <span class="tt">Python</span>
+          <span class="tt">OctoPrint API</span>
+          <span class="tt">Claude</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTACT
+  ============================================================ -->
+  <section id="contact">
+    <div class="s-label rv">Contact</div>
+    <h2 class="rv">Let's build<br><em>something.</em></h2>
+    <p class="rv">Open to new opportunities, contract work, and interesting problems.<br>Reach out — let's talk.</p>
+    <div class="c-links rv">
+      <a href="mailto:jamieperkel@gmail.com" class="btn btn-primary">jamieperkel@gmail.com</a>
+      <a href="https://github.com/purpleperkel"   class="btn btn-ghost" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://linkedin.com/in/jamieperkel" class="btn btn-ghost" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer>
+    <p>© 2026 Jamie Perkel</p>
+    <div class="f-dots" aria-hidden="true">
+      <div class="f-dot on"></div>
+      <div class="f-dot"></div>
+      <div class="f-dot on"></div>
+      <div class="f-dot"></div>
+      <div class="f-dot on"></div>
+      <div class="f-dot"></div>
+      <div class="f-dot on"></div>
+    </div>
+    <p>Built with intention.</p>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+  (() => {
+    'use strict';
+
+    // ── Canvas setup ────────────────────────────────────────────
+    const canvas = document.getElementById('geo-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W = 0, H = 0;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize, { passive: true });
+    resize();
+
+    // ── Star data ────────────────────────────────────────────────
+    const PALETTE = [
+      [240, 184, 208],  // blush
+      [157, 180, 245],  // periwinkle
+      [196, 175, 240],  // lavender
+      [255, 248, 255],  // near-white
+      [224, 210, 255],  // soft lilac
+    ];
+    const VARIETIES = [
+      { pts: 4, ratio: 0.12 },  // classic 4-point
+      { pts: 4, ratio: 0.04 },  // slim elongated
+      { pts: 4, ratio: 0.22 },  // chunky 4-point
+      { pts: 8, ratio: 0.45 },  // 8-point star
+      { pts: 4, ratio: 0.08 },  // needle cross
+    ];
+
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+
+    function makeStar() {
+      const v = VARIETIES[Math.floor(Math.random() * VARIETIES.length)];
+      return {
+        fx: rnd(0, 1), fy: rnd(0, 1),   // fractional position
+        ox: 0, oy: 0,                    // repulsion offset
+        vx: rnd(-0.06, 0.06),
+        vy: rnd(-0.06, 0.06),
+        size:  rnd(4, 20),
+        rot:   rnd(0, Math.PI * 2),
+        rotV:  rnd(-0.003, 0.003),
+        pts:   v.pts,
+        ratio: v.ratio,
+        col:   PALETTE[Math.floor(Math.random() * PALETTE.length)],
+        baseAlpha:    rnd(0.35, 0.75),
+        twinklePhase: rnd(0, Math.PI * 2),
+        twinkleSpeed: rnd(0.008, 0.022),
+        twinkleAmp:   rnd(0.08,  0.22),
+        scrollWeight: rnd(0.4, 1.0),
+      };
+    }
+
+    const stars = Array.from({ length: 80 }, makeStar);
+
+    // ── Drawing helpers ──────────────────────────────────────────
+    function starPath(pts, outer, inner) {
+      ctx.beginPath();
+      for (let i = 0; i < pts * 2; i++) {
+        const angle = (Math.PI / pts) * i - Math.PI / 2;
+        const r = i % 2 === 0 ? outer : inner;
+        i === 0
+          ? ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r)
+          : ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+      }
+      ctx.closePath();
+    }
+
+    // ── Interaction state ────────────────────────────────────────
+    const mouse     = { x: -9999, y: -9999 };
+    let scrollVY    = 0;
+    let lastScrollY = window.scrollY;
+    let scrollTimer = null;
+
+    const REPEL_R = 155;
+    const REPEL_F = 32;
+
+    // ── Animation loop ───────────────────────────────────────────
+    let lastTs = 0;
+
+    function draw(ts) {
+      requestAnimationFrame(draw);
+      const dt = Math.min((ts - lastTs) / 16.67, 2.5);
+      lastTs = ts;
+
+      ctx.clearRect(0, 0, W, H);
+
+      for (const s of stars) {
+        // drift
+        s.fx  += (s.vx / W) * dt;
+        s.fy  += (s.vy / H) * dt;
+        s.rot += s.rotV * dt;
+        s.twinklePhase += s.twinkleSpeed * dt;
+
+        // scroll nudge
+        if (Math.abs(scrollVY) > 0.1) {
+          s.fy  += scrollVY * s.scrollWeight * 0.00025 * dt;
+          s.rot += scrollVY * s.scrollWeight * 0.0004  * dt;
+        }
+
+        // wrap edges
+        if (s.fx < -0.06) s.fx = 1.06;
+        if (s.fx >  1.06) s.fx = -0.06;
+        if (s.fy < -0.06) s.fy = 1.06;
+        if (s.fy >  1.06) s.fy = -0.06;
+
+        const px = s.fx * W + s.ox;
+        const py = s.fy * H + s.oy;
+
+        // cursor repulsion
+        const dx   = px - mouse.x;
+        const dy   = py - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        let tox = 0, toy = 0, spinMul = 1;
+
+        if (dist < REPEL_R && dist > 1) {
+          const t  = 1 - dist / REPEL_R;
+          tox      = (dx / dist) * t * REPEL_F;
+          toy      = (dy / dist) * t * REPEL_F;
+          spinMul  = 1 + t * 7;
+        }
+        s.ox  += (tox - s.ox) * 0.1 * dt;
+        s.oy  += (toy - s.oy) * 0.1 * dt;
+        s.rot += s.rotV * (spinMul - 1) * dt;
+
+        // alpha
+        const prox    = dist < REPEL_R ? (1 - dist / REPEL_R) : 0;
+        const twinkle = Math.sin(s.twinklePhase) * s.twinkleAmp;
+        const alpha   = Math.min(s.baseAlpha + prox * 0.5 + twinkle, 0.92);
+        const [r, g, b] = s.col;
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(s.rot);
+
+        // ambient glow
+        const glowR = s.size * 4;
+        const grd   = ctx.createRadialGradient(0, 0, s.size * 0.3, 0, 0, glowR);
+        grd.addColorStop(0,   `rgba(${r},${g},${b},${(alpha * 0.30).toFixed(3)})`);
+        grd.addColorStop(0.4, `rgba(${r},${g},${b},${(alpha * 0.10).toFixed(3)})`);
+        grd.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+        ctx.beginPath();
+        ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+
+        // star shape
+        starPath(s.pts, s.size, s.size * s.ratio);
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // constellation lines
+      for (let i = 0; i < stars.length; i++) {
+        const a  = stars[i];
+        const ax = a.fx * W + a.ox;
+        const ay = a.fy * H + a.oy;
+        for (let j = i + 1; j < stars.length; j++) {
+          const b  = stars[j];
+          const bx = b.fx * W + b.ox;
+          const by = b.fy * H + b.oy;
+          const d  = Math.hypot(ax - bx, ay - by);
+          if (d < 130) {
+            const t = 1 - d / 130;
+            const lineAlpha = (t * t * 0.22).toFixed(3);
+            const grad = ctx.createLinearGradient(ax, ay, bx, by);
+            const [ar, ag, ab] = a.col;
+            const [br, bg, bb] = b.col;
+            grad.addColorStop(0, `rgba(${ar},${ag},${ab},${lineAlpha})`);
+            grad.addColorStop(1, `rgba(${br},${bg},${bb},${lineAlpha})`);
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth   = 0.8 + t * 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // dampen scroll velocity
+      scrollVY *= Math.pow(0.88, dt);
+    }
+
+    requestAnimationFrame(draw);
+
+    // ── Event listeners ──────────────────────────────────────────
+    window.addEventListener('mousemove', e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    }, { passive: true });
+
+    window.addEventListener('scroll', () => {
+      const sy = window.scrollY;
+      scrollVY = sy - lastScrollY;
+      lastScrollY = sy;
+      document.getElementById('nav').classList.toggle('scrolled', sy > 30);
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => { scrollVY = 0; }, 150);
+    }, { passive: true });
+
+    // scroll-trigger clicks: dramatic star burst
+    document.querySelectorAll('.scroll-trigger').forEach(el => {
+      el.addEventListener('click', e => {
+        const cx = e.clientX, cy = e.clientY;
+        for (const s of stars) {
+          const d = Math.hypot(s.fx * W - cx, s.fy * H - cy);
+          if (d < 350) {
+            const push = (1 - d / 350) * 3.2;
+            s.vx += ((s.fx * W - cx) / (d + 1)) * push;
+            s.vy += ((s.fy * H - cy) / (d + 1)) * push;
+            setTimeout(() => { s.vx *= 0.18; s.vy *= 0.18; }, 500);
+          }
+        }
+      });
+    });
+
+    // general clicks: gentle scatter
+    document.addEventListener('click', e => {
+      if (e.target.closest('.scroll-trigger')) return;
+      for (const s of stars) {
+        const d = Math.hypot(s.fx * W - e.clientX, s.fy * H - e.clientY);
+        if (d < 200) {
+          const push = (1 - d / 200) * 1.8;
+          s.vx += ((s.fx * W - e.clientX) / (d + 1)) * push;
+          s.vy += ((s.fy * H - e.clientY) / (d + 1)) * push;
+          setTimeout(() => { s.vx *= 0.25; s.vy *= 0.25; }, 400);
+        }
+      }
+    });
+
+    // project card cursor-tracking glow
+    document.querySelectorAll('.pc').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--cx', `${e.clientX - r.left}px`);
+        card.style.setProperty('--cy', `${e.clientY - r.top}px`);
+      });
+    });
+
+    // ── Scroll reveal ────────────────────────────────────────────
+    const rvEls = document.querySelectorAll('.rv');
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('vis'), i * 75);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    rvEls.forEach(el => observer.observe(el));
+
+    // fallback: force-reveal anything still hidden after 10s
+    setTimeout(() => {
+      rvEls.forEach(el => el.classList.add('vis'));
+    }, 10000);
+
+  })();
+  </script>
+
+</body>
 </html>
